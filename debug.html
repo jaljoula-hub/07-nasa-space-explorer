@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NASA APOD API Debug</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f1f1f1;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: #212121;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #d3d3d3;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #bfbfbf;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .error {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .success {
+      color: #388e3c;
+      font-weight: bold;
+    }
+    img {
+      max-width: 100%;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔭 NASA APOD API Debug Tool (Updated)</h1>
+    <p>This tool tests the NEW NASA APOD API endpoint (changed Sept 2026).</p>
+    
+    <div>
+      <label>Start Date:</label>
+      <input type="date" id="startDate" value="2024-06-15" />
+      
+      <label style="margin-left: 20px;">End Date:</label>
+      <input type="date" id="endDate" value="2024-06-20" />
+      
+      <button onclick="testAPI()">Test New API Endpoint</button>
+    </div>
+
+    <div id="output">
+      Waiting for test...
+    </div>
+  </div>
+
+  <script>
+    // NEW API ENDPOINT (no API key needed!)
+    const NASA_API_URL = 'https://science.nasa.gov/wp-json/wp/v2/apod-basic';
+
+    async function testAPI() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const output = document.getElementById('output');
+
+      output.innerHTML = 'Fetching API data from new endpoint...';
+
+      try {
+        // Build URL (no API key needed for new endpoint!)
+        const url = `${NASA_API_URL}?start_date=${startDate}&end_date=${endDate}`;
+        console.log('Fetching from:', url);
+        output.innerHTML = `<strong>Fetching from:</strong> ${url}\n\n`;
+
+        // Fetch data
+        const response = await fetch(url);
+        output.innerHTML += `<strong>Response Status:</strong> ${response.status} ${response.statusText}\n\n`;
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Parse JSON
+        const data = await response.json();
+        output.innerHTML += `<span class="success">✓ API Response Received</span>\n\n`;
+        output.innerHTML += `<strong>Total Images Found: ${data.length}</strong>\n\n`;
+
+        // Analyze each image
+        if (Array.isArray(data)) {
+          data.slice(0, 3).forEach((image, index) => {
+            output.innerHTML += `<span class="success">Image ${index}:</span>\n`;
+            output.innerHTML += `  Title: ${image.title || 'MISSING'}\n`;
+            output.innerHTML += `  Date: ${image.date || 'MISSING'}\n`;
+            output.innerHTML += `  Media Type: ${image.media_type || 'MISSING'}\n`;
+            output.innerHTML += `  URL: ${image.url ? '✓ Present' : '✗ MISSING'}\n`;
+            output.innerHTML += `  HD URL: ${image.hdurl ? '✓ Present' : '✗ MISSING'}\n`;
+            
+            if (image.hdurl) {
+              output.innerHTML += `  Preview (HD):\n`;
+              output.innerHTML += `  <img src="${image.hdurl}" alt="${image.title}" style="max-width: 300px;" />\n`;
+            } else if (image.url) {
+              output.innerHTML += `  Preview (Standard):\n`;
+              output.innerHTML += `  <img src="${image.url}" alt="${image.title}" style="max-width: 300px;" />\n`;
+            }
+            output.innerHTML += '\n';
+          });
+          
+          output.innerHTML += `\n<span class="success">Showing first 3 of ${data.length} images...</span>`;
+        }
+      } catch (error) {
+        output.innerHTML += `<span class="error">✗ Error: ${error.message}</span>\n`;
+        console.error('Full error:', error);
+      }
+    }
+  </script>
+</body>
+</html>
